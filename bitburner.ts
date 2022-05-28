@@ -1,8 +1,9 @@
-import { Command } from "cliffy";
-import { config } from "dotenv";
 import { watch } from "./server.ts";
+import { cliffy, dotenv } from "./deps.ts";
 
-const env = config();
+const { Command } = cliffy;
+
+const env = dotenv.config();
 
 await new Command()
   .name("bitburner")

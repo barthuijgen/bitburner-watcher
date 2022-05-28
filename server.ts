@@ -1,10 +1,4 @@
-import { encode as base64Encode } from "base64";
-import { debounce } from "debounce";
-import * as path from "path";
-import { transform } from "swc";
-import { readAll } from "streams/conversion";
-import * as esbuild from "https://deno.land/x/esbuild@v0.14.39/mod.js";
-import "bitburner";
+import { base64, debounce, path, swc, conversion, esbuild } from "./deps.ts";
 
 const ALLOWED = [".js", ".script", ".ns", ".txt"];
 
@@ -71,7 +65,7 @@ function fixFileContent(code: string) {
 
 function transformSingleFile(content: string) {
   try {
-    const { code } = transform(content, {
+    const { code } = swc.transform(content, {
       jsc: {
         target: "es2021",
         parser: {
@@ -93,7 +87,7 @@ async function transformBundledFile(filepath: string) {
     stdout: "piped",
   });
 
-  const buff = await readAll(process.stdout);
+  const buff = await conversion.readAll(process.stdout);
   const decoder = new TextDecoder("utf-8");
   return decoder.decode(buff);
 }
@@ -155,7 +149,7 @@ async function syncFile(options: WatchOptions, filepath: string) {
 
   const body = JSON.stringify({
     filename,
-    code: base64Encode(fixFileContent(code)),
+    code: base64.encode(fixFileContent(code)),
   });
 
   const res = await fetch(`http://${options.apiHost}:${options.apiPort}/`, {
@@ -192,7 +186,7 @@ async function syncFile(options: WatchOptions, filepath: string) {
   }
 }
 
-const debounced = debounce(syncFile, 100);
+const debounced = debounce.debounce(syncFile, 100);
 
 export async function watch(options: WatchOptions) {
   options.watchDir = path.resolve(options.watchDir);

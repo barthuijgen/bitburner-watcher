@@ -1,1 +1,1 @@
-deno compile --import-map=import_map.json --allow-env --allow-read --allow-write --allow-net --allow-run --output target/bitburner bitburner.ts
+deno compile --allow-env --allow-read --allow-write --allow-net --allow-run --output target/bitburner bitburner.ts
