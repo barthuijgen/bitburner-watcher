@@ -14,7 +14,7 @@ Features:
 
 Install deno https://deno.land/manual/getting_started/installation
 
-`deno install --allow-env --allow-read --allow-write --allow-net --allow-run https://cdn.deno.land/bitburner/versions/0.3.0/raw/bitburner.ts`
+`deno install --allow-env --allow-read --allow-write --allow-net --allow-run https://deno.land/x/bitburner@0.3.0/bitburner.ts`
 
 ## Environment
 
@@ -39,7 +39,9 @@ To sync all existing files once
 Write scripts using es modules, you would not need bundling in most cases.
 You can import npm modules with CDNs like https://esm.sh/
 
-Set up an import alas with `import_map.json`
+---
+
+Set up an import alias with `import_map.json`
 
 ```
 {
@@ -49,4 +51,15 @@ Set up an import alas with `import_map.json`
 }
 ```
 
-And use import paths like `import {} from '@/folder/script.ts`. This is needed because BitBurner does not support relative imports in some cases
+And use import paths like `import {} from '@/folder/script.ts`. This is needed because BitBurner does not support relative imports
+in some cases
+
+---
+
+You can add
+
+```
+"bitburner": "https://raw.githubusercontent.com/danielyxie/bitburner/dev/dist/bitburner.d.ts"
+```
+
+to the `import_map.json` to get types. Import it with `import type { NS } from "bitburner";`
