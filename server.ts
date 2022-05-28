@@ -1,5 +1,6 @@
 import { base64, debounce, path, swc, conversion, esbuild } from "./deps.ts";
 
+const TRANSFORM = [".ts", ".tsx"];
 const ALLOWED = [".js", ".script", ".ns", ".txt"];
 
 interface WatchOptions {
@@ -46,7 +47,7 @@ function fixFilename(filename: string) {
 }
 
 function fixFileContent(code: string) {
-  // replace .ts imports with .js
+  // replace .ts(x) imports with .js
   // Fix absolute import paths in the game
   return (
     code
@@ -55,7 +56,7 @@ function fixFileContent(code: string) {
       .replaceAll('from "@/', 'from "/')
       .replaceAll("document.", "globalThis['document'].")
       .replaceAll("globalThis.document", "globalThis['document']")
-      // Specific fix for re-exporting Evt
+      // Specific fix for re-exporting https://esm.sh/evt
       .replace(
         "export { Evt as Evt };",
         "const Evt = Ir.Evt;\n" + "export { Evt };\n"
@@ -133,9 +134,13 @@ async function syncFile(options: WatchOptions, filepath: string) {
     return console.log(`Failed to copy ${relativePath}, could not read file`);
   }
 
+  const shouldTransform = TRANSFORM.includes(path.extname(filepath));
   const shouldBundle = file.includes("// @bundlefile");
-  const shouldEsbundle = file.includes("// @esbundlefile");
-  const code = shouldEsbundle
+  // esbuild still has some issues, for now `deno bundle` will do
+  const shouldEsbundle = false; // file.includes("// @esbundlefile");
+  const code = !shouldTransform
+    ? file
+    : shouldEsbundle
     ? await transformEsbuildFile(filepath)
     : shouldBundle
     ? await transformBundledFile(filepath)
@@ -198,5 +203,29 @@ export async function watch(options: WatchOptions) {
       const last = event.paths[event.paths.length - 1];
       debounced(options, last);
     }
+  }
+}
+
+export async function recursiveReaddir(dir: string) {
+  const files: string[] = [];
+  const getFiles = async (dir: string) => {
+    for await (const dirEntry of Deno.readDir(dir)) {
+      if (dirEntry.isDirectory) {
+        await getFiles(path.join(dir, dirEntry.name));
+      } else if (dirEntry.isFile) {
+        files.push(path.join(dir, dirEntry.name));
+      }
+    }
+  };
+  await getFiles(dir);
+  return files;
+}
+
+export async function sync(options: WatchOptions) {
+  options.watchDir = path.resolve(options.watchDir);
+  const files = await recursiveReaddir(options.watchDir);
+
+  for await (const file of files) {
+    await syncFile(options, file);
   }
 }
